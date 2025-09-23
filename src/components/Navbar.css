@@ -1,0 +1,71 @@
+/* Navbar container */
+.navbar {
+  background-color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 40px; }
+
+/* Logo container */
+.nav-logo .logo-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;            /* space between logo and text */
+  text-decoration: none;
+}
+
+/* Logo image */
+.nav-logo img.logo-img {
+  height: 40px;         /* adjust height */
+  width: auto;
+  display: block;
+}
+
+/* Logo text */
+.nav-logo .logo-text {
+  font-size: 20px;
+  font-weight: bold;
+  color: white;         /* navbar bg mela white visible */
+  letter-spacing: 1px;
+}
+
+/* Links container */
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 25px;
+  margin: 0;
+  padding: 0;
+}
+
+/* Link items */
+.nav-links li a {
+  color: white;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+/* Hover effect */
+.nav-links li a:hover {
+  color: var(--color-secondary);
+}
+
+/* Responsive design (mobile view) */
+@media (max-width: 800px) {
+  .nav-links {
+    flex-direction: column;
+    background-color: var(--color-primary);
+    position: absolute;
+    top: 64px;
+    right: 20px;
+    padding: 15px;
+    border-radius: 8px;
+    display: none;
+  }
+
+  .nav-links.open {
+    display: flex;
+  }
+}

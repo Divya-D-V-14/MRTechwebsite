@@ -1,70 +1,135 @@
-# Getting Started with Create React App
+/* ===== HERO SECTION ===== */
+.hero {
+  padding: 40px 20px;
+  min-height: calc(100vh - 70px);
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+  /* dark navy background + subtle grid */
+  background-color: #0f172a;
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
 
-## Available Scripts
+.hero-grid {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 28px;
+  align-items: center;
+}
 
-In the project directory, you can run:
+/* ===== LEFT CONTENT ===== */
+.hero-title {
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1.3;
+  margin: 0 0 20px 0;
 
-### `npm start`
+  /* gradient heading text */
+  background: linear-gradient(
+    90deg,
+    var(--color-secondary),
+    var(--color-accent1),
+    var(--color-accent2)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+.hero-sub {
+  color: #e5e7eb;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+/* ===== BUTTONS ===== */
+.hero-buttons {
+  display: flex;
+  flex-direction: column;  /* 🔑 vertical stack */
+  gap: 15px;
+  margin-top: 20px;
+  max-width: 320px; /* optional: restrict width for neat look */
+}
 
-### `npm test`
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 14px 22px;
+  border-radius: 28px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;              /* 🔑 each button takes full width */
+  justify-content: center;  /* center align text+icon */
+}
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+.btn-primary {
+  background-color: var(--color-secondary);
+  color: #fff;
+  border: none;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+}
 
-### `npm run build`
+.btn-primary:hover {
+  filter: brightness(0.95);
+}
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+.btn-outline {
+  background: transparent;
+  color: #fff;
+  border: 2px solid #fff;
+}
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+.btn-icon {
+  font-size: 1.1rem;
+}
 
-### `npm run eject`
+/* ===== RIGHT IMAGE ===== */
+.hero-right {
+  display: flex;
+  justify-content: center;
+}
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+.hero-img {
+  width: 100%;
+  max-width: 650px;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,0.25));
+  border-radius: 8px;
+}
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+/* ===== RESPONSIVE ===== */
+@media (max-width: 992px) {
+  .hero-title {
+    font-size: 2.2rem;
+  }
+}
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+@media (max-width: 780px) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+  .hero-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
 
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+  .btn {
+    width: 100%;              /* mobile la full width */
+    justify-content: center;
+  }
+}
