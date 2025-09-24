@@ -1,0 +1,151 @@
+:root {
+  --color-primary: #1d4ed8;  /* blue for buttons */
+  --color-bg: #f3f4f6; /* light gray section background */
+  --text-color: #111827; /* dark text */
+}
+
+/* ===== Section ===== */
+.contact {
+  background: var(--color-bg);
+  padding: 60px 20px;
+}
+
+.contact-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
+/* ===== Cards ===== */
+.card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  padding: 24px;
+  position: relative;
+}
+
+/* Card Header */
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 16px;
+}
+
+.head-icon { font-size: 20px; }
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+/* Company Info */
+.company-name {
+  font-weight: 700;
+  border: 1px solid #d1d5db;
+  padding: 6px 12px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+.company-tag {
+  font-size: 0.95rem;
+  color: #4b5563;
+  margin-bottom: 18px;
+}
+
+.info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 18px 0;
+}
+
+.info-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-color);
+  margin-bottom: 10px;
+}
+
+.info-list .i {
+  color: var(--color-primary);
+  min-width: 20px;
+}
+
+.info-list a {
+  text-decoration: none;
+  color: inherit;
+}
+.info-list a:hover { text-decoration: underline; }
+
+/* Schedule Call Button */
+.call-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-primary);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+.call-btn:hover {
+  background: #2563eb;
+}
+
+/* Form Card */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form input,
+.form select,
+.form textarea {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.form input:focus,
+.form select:focus,
+.form textarea:focus {
+  border-color: var(--color-primary);
+}
+
+.submit-btn {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.submit-btn:hover {
+  background: #2563eb;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .contact-grid { grid-template-columns: 1fr; }
+}
