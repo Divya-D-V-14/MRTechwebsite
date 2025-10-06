@@ -68,6 +68,7 @@ export default function Partners() {
               <li>Farmer Producer Organizations</li>
               <li>AgriTech Startups</li>
               <li>Soil Testing Labs</li>
+              
               <li>Agricultural Universities</li>
             </ul>
           </article>
@@ -77,7 +78,7 @@ export default function Partners() {
           <a href="/contact" className="cta-btn">
             <span className="cta-emoji">🤝</span> Become an Associate
           </a>
-          <a href="/partners/list" className="cta-btn outline">
+          <a className="cta-btn outline">
             <span className="cta-emoji">📋</span> View Partner List
           </a>
         </div>
