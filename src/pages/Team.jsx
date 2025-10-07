@@ -147,7 +147,7 @@ import "./Team.css";
 const teamData = {
      "ai-scientists": [
     { name: "Anupriya Narasimman", 
-      role: "Senior AI Scientist", 
+      role: "Junior Developer", 
       image: "/images/ai-scientists/Anu.png",
       bio: "Leads AI-driven healthcare projects for hospitals.",
       email: "anupriyan.ai@gmail.com",
@@ -155,7 +155,7 @@ const teamData = {
     },
 
     { name: "Aparna Ravi", 
-      role: "Machine Learning Expert", 
+      role: "Junior Developer", 
       image: "/images/ai-scientists/Aparna.jpg",
       bio: "Leads AI-driven healthcare projects for hospitals.",
       email: "alexander@example.com",
@@ -163,7 +163,7 @@ const teamData = {
     },
 
     { name: "Deepika Saiganesh", 
-      role: "Deep Learning Engineer", 
+      role: "Junior Developer", 
       image: "/images/ai-scientists/Deepika.png",
       bio: "Leads AI-driven healthcare projects for hospitals.",
       email: "deepikas0707.ai@gmail.com",
@@ -171,7 +171,7 @@ const teamData = {
     },
 
     { name: "Dharani Velu", 
-      role: "Computer Vision Specialist", 
+      role: "Junior Developer", 
       image: "/images/ai-scientists/Dharani.png",
       bio: "Leads AI-driven healthcare projects for hospitals.",
       email: "dharaniv.ai14@gmail.com",
@@ -179,7 +179,7 @@ const teamData = {
     },
 
     { name: "Divya Veerabhadram", 
-      role: "NLP Research Scientist", 
+      role: "Junior Developer", 
       image: "/images/ai-scientists/Divya D V.png",
       bio: "Leads AI-driven healthcare projects for hospitals.",
       email: "divyadv.ai@gmail.com",
@@ -187,7 +187,7 @@ const teamData = {
     },
 
     { name: "Divya Velumani", 
-      role: "AI Research Lead", 
+      role: "Junior Developer", 
       image: "/images/ai-scientists/Divya.png", 
       bio: "Leads AI-driven healthcare projects for hospitals.",
       email: "divyav16.ai@gmail.com",
@@ -195,7 +195,7 @@ const teamData = {
     },
 
     { name: "Gomathi Krishnan", 
-      role: "Robotics AI Engineer", 
+      role: "Junior Developer", 
       image: "/images/ai-scientists/Gomathi.png",
       bio: "Leads AI-driven healthcare projects for hospitals.",
       email: "gomathik30.ai@gmail.com",
@@ -203,7 +203,7 @@ const teamData = {
     },
 
     { name: "Jeyalakshmi Mariyappan", 
-      role: "Autonomous Systems Engineer", 
+      role: "Junior Developer", 
       image: "/images/ai-scientists/jeyalakshmi.png",
       bio: "Leads AI-driven healthcare projects for hospitals.",
       email: "jeyalakshmim.ai01@gmail.com",
@@ -211,7 +211,7 @@ const teamData = {
     },
 
     { name: "Keerthana S", 
-      role: "Neural Network Architect", 
+      role: "Junior Developer", 
       image: "/images/ai-scientists/Keerthana.png",
       bio: "Leads AI-driven healthcare projects for hospitals.",
       email: "keerthanas15.ai@gmail.com",
@@ -219,7 +219,7 @@ const teamData = {
     },
 
     { name: "Keerthika Sankar", 
-      role: "AI Algorithm Developer", 
+      role: "Junior Developer", 
       image: "/images/ai-scientists/keerthika.png", 
       bio: "Leads AI-driven healthcare projects for hospitals.",
       email: "keerthis21.ai@gmail.com",
@@ -227,7 +227,7 @@ const teamData = {
     },
 
     { name: "Padmavathi Shanmugam", 
-      role: "Reinforcement Learning Expert", 
+      role: "Junior Developer", 
       image: "/images/ai-scientists/Padmavathi.png",
       bio: "Leads AI-driven healthcare projects for hospitals.",
       email: "padmavathis14.ai@gmail.com",
@@ -235,7 +235,7 @@ const teamData = {
     },
 
     { name: "Pavithra Venkateshan", 
-      role: "AI Software Engineer", 
+      role: "Junior Developer", 
       image: "/images/ai-scientists/pavi.png",
       bio: "Leads AI-driven healthcare projects for hospitals.",
       email: "pavithrav13.ai@gmail.com",
@@ -243,14 +243,14 @@ const teamData = {
     },
 
     { name: "Priya Venkateshan", 
-      role: "Cognitive Computing Specialist", 
+      role: "Junior Developer", 
       image: "/images/ai-scientists/Priya.png",
       bio: "Leads AI-driven healthcare projects for hospitals.",
       email: "priyav63.ai@gmail.com",
       linkedin: "https://www.linkedin.com/in/priya-v-4b31b7335/"
     },
     { name: "Reena Poongavanam", 
-      role: "AI Research Associate", 
+      role: "Junior Developer", 
       image: "/images/ai-scientists/Reena.png",
       bio: "Leads AI-driven healthcare projects for hospitals.",
       email: "reenap21.ai@gmail.com",
@@ -258,7 +258,7 @@ const teamData = {
     },
 
     { name: "Sujatha Velayudham", 
-      role: "Predictive Analytics Expert", 
+      role: "Junior Developer", 
       image: "/images/ai-scientists/Sujatha.jpg", 
       bio: "Leads AI-driven healthcare projects for hospitals.",
       email: "sujathav2003.ai@gmail.com",
@@ -266,7 +266,7 @@ const teamData = {
     },
 
     { name: "Uma Saraswathi Subramaniyan", 
-      role: "AI Solutions Architect", 
+      role: "Junior Developer", 
       image: "/images/ai-scientists/umasaraswathi.png",
       bio: "Leads AI-driven healthcare projects for hospitals.",
       email: "umasaraswathis.ai@gmail.com",
@@ -406,7 +406,7 @@ const teamData = {
 
   "data-engineers": [
     { name: "Uma Saraswathi Subramaniyan", 
-      role: "AI Solutions Architect", 
+      role: "Data Engineer", 
       image: "/images/ai-scientists/umasaraswathi.png",
       bio: "Leads AI-driven healthcare projects for hospitals.",
       email: "umasaraswathis.ai@gmail.com",

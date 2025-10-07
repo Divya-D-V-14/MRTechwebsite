@@ -375,50 +375,47 @@
 
 
 
-
 import React, { useState } from "react";
+import axios from "axios";
 import "./Contact.css";
 
 export default function Contact() {
-  // ---------- state ----------
   const [form, setForm] = useState({
     name: "",
-    email: "",
     phone: "",
+    email: "",
     service: "",
     message: "",
   });
-  const [status, setStatus] = useState({ loading: false, ok: null, error: null });
 
-  // API base (local or prod)
-  const API_URL =
-    process.env.REACT_APP_API_URL || "http://localhost:4000";
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
 
-  // ---------- handlers ----------
-  const onChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    setStatus({ loading: true, ok: null, error: null });
+    setLoading(true);
+    setSuccess("");
+    setError("");
 
     try {
-      const res = await fetch(`${API_URL}/api/contact`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Failed");
-
-      setStatus({ loading: false, ok: true, error: null });
-      setForm({ name: "", email: "", phone: "", service: "", message: "" });
+      const res = await axios.post("http://localhost:3000/api/send-enquiry", form);
+      if (res.data.success) {
+        setSuccess(res.data.message);
+        setForm({ name: "", phone: "", email: "", service: "", message: "" });
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
     } catch (err) {
-      setStatus({ loading: false, ok: false, error: err.message });
+      console.error(err);
+      setError(err.response?.data?.error || "Server error. Try again later.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // ---------- UI ----------
   return (
     <main className="c-wrap">
       {/* Header */}
@@ -453,15 +450,11 @@ export default function Contact() {
           <div className="c-row">
             <div className="c-label c-office">Office:</div>
             <div className="c-value">
-              Registered Office Address
-              <br />
-              Tamil Nadu, India
+              Registered Office Address<br />Tamil Nadu, India
             </div>
           </div>
 
-          <a className="c-cta" href="tel:+919999999999">
-            📅 Schedule Call
-          </a>
+          <a className="c-cta" href="tel:+919999999999">📅 Schedule Call</a>
         </article>
 
         {/* RIGHT — Form */}
@@ -469,6 +462,9 @@ export default function Contact() {
           <h3 className="c-card-title">
             <span className="c-emoji">💬</span> Quick Enquiry
           </h3>
+
+          {success && <div className="c-success">{success}</div>}
+          {error && <div className="c-error">{error}</div>}
 
           <form onSubmit={onSubmit} className="c-form-grid">
             <input
@@ -479,11 +475,11 @@ export default function Contact() {
               required
             />
             <input
-              type="tel"
               name="phone"
               value={form.phone}
               onChange={onChange}
               placeholder="Phone Number"
+              required
             />
             <input
               type="email"
@@ -493,7 +489,6 @@ export default function Contact() {
               placeholder="Email Address"
               required
             />
-
             <select
               name="service"
               value={form.service}
@@ -508,7 +503,6 @@ export default function Contact() {
               <option>Partnership</option>
               <option>Other</option>
             </select>
-
             <textarea
               name="message"
               value={form.message}
@@ -517,23 +511,13 @@ export default function Contact() {
               rows={4}
               required
             />
-
-            <button type="submit" className="c-send" disabled={status.loading}>
-              {status.loading ? "Sending..." : "Send Message"}
+            <button type="submit" className="c-send" disabled={loading}>
+              {loading ? "Sending..." : "Send Message"}
             </button>
-
-            {/* tiny status text */}
-            {status.ok && (
-              <small style={{ color: "green" }}>
-                Thanks! We’ll reach you soon.
-              </small>
-            )}
-            {status.error && (
-              <small style={{ color: "crimson" }}>{status.error}</small>
-            )}
           </form>
         </article>
       </section>
     </main>
   );
 }
+
