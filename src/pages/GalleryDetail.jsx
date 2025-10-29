@@ -11,7 +11,7 @@ export default function GalleryDetail() {
     return (
       <section className="gallery-section">
         <h2>Gallery not found</h2>
-        <Link to="/gallery" className="back-link">← Back to Gallery</Link>
+        {/* <Link to="/gallery" className="back-link">← </Link> */}
       </section>
     );
   }
@@ -22,7 +22,7 @@ export default function GalleryDetail() {
       <h1 className="gallery-title">{gallery.title}</h1>
 
       <div className="detail-actions">
-        <Link to="/gallery" className="back-link">← Back to Gallery</Link>
+        {/* <Link to="/gallery" className="back-link">← </Link> */}
       </div>
 
       <div className="image-grid">

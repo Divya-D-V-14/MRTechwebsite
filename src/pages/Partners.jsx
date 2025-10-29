@@ -74,14 +74,14 @@ export default function Partners() {
           </article>
         </div>
 
-        <div className="cta-row">
+        {/* <div className="cta-row">
           <a href="/contact" className="cta-btn">
             <span className="cta-emoji">🤝</span> Become an Associate
           </a>
           <a className="cta-btn outline">
             <span className="cta-emoji">📋</span> View Partner List
           </a>
-        </div>
+        </div> */}
       </section>
     </main>
   );
