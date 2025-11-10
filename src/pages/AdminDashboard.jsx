@@ -1,41 +1,172 @@
-// src/pages/AdminDashboard.jsx
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx";
 import "./AdminDashboard.css";
-
-const sampleOrders = [
-  { id: "#ORD-001", customer: "Rajesh Kumar", email: "rajesh@email.com", phone: "9876543210", items: "Stethoscope, BP Manual", total: 5700, status: "pending", date: "2025-10-28", address: "123 Anna Nagar, Chennai - 600001" },
-  { id: "#ORD-002", customer: "Priya Sharma", email: "priya@email.com", phone: "9876543211", items: "Glucometer, Test Tubes", total: 1950, status: "processing", date: "2025-10-28", address: "45 T Nagar, Chennai - 600017" },
-  { id: "#ORD-003", customer: "Vijay Anand", email: "vijay@email.com", phone: "9876543212", items: "Wheel Chair", total: 8500, status: "shipped", date: "2025-10-27", address: "78 Adyar, Chennai - 600020" },
-  { id: "#ORD-004", customer: "Lakshmi Devi", email: "lakshmi@email.com", phone: "9876543213", items: "Medical Gloves, Masks", total: 630, status: "delivered", date: "2025-10-26", address: "90 Mylapore, Chennai - 600004" }
-];
-
-const sampleProducts = [
-  { id: 1, name: "Stethoscope", category: "Non-Consumable", stock: 1, price: 2500, sku: "MED-001" },
-  { id: 2, name: "BP Manual", category: "Non-Consumable", stock: 1, price: 3200, sku: "MED-002" },
-  { id: 3, name: "Glucometer", category: "Non-Consumable", stock: 1, price: 1800, sku: "MED-003" },
-  { id: 4, name: "Test Tubes", category: "Consumable", stock: 50, price: 150, sku: "CON-001" },
-  { id: 5, name: "Medical Gloves", category: "Consumable", stock: 100, price: 380, sku: "CON-002" }
-];
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [currentTab, setCurrentTab] = useState("dashboard");
-  const [orders, setOrders] = useState(sampleOrders);
-  const [products] = useState(sampleProducts);
+  const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [selectedStat, setSelectedStat] = useState(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "",
+    stock: "",
+    price: "",
+    sku: "",
+  });
 
-  const totalOrders = orders.length;
-  const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
-  const pendingOrders = orders.filter(o => o.status === "pending").length;
-  const lowStockItems = products.filter(p => p.stock < 5).length;
+  // Fetch orders + products
+  useEffect(() => {
+    fetchOrders();
+    fetchProducts();
+  }, []);
 
-  const updateOrderStatus = (orderId, newStatus) => {
-    setOrders(orders.map(order => 
-      order.id === orderId ? {...order, status: newStatus} : order
-    ));
-    if (selectedOrder && selectedOrder.id === orderId) {
-      setSelectedOrder({...selectedOrder, status: newStatus});
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/api/products");
+      const data = await res.json();
+      if (data.success) setProducts(data.products);
+    } catch (err) {
+      console.error("Error fetching products:", err);
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      const response = await fetch("http://localhost:3000/api/orders");
+      const data = await response.json();
+      if (data.success) {
+        const formatted = data.orders.map((o) => ({
+          id: o.orderId,
+          customer: o.customerName,
+          email: o.email,
+          phone: o.phone,
+          items: Array.isArray(o.items)
+            ? o.items.map((i) => i.name).join(", ")
+            : o.items,
+          total: o.totalAmount,
+          status: o.orderStatus,
+          date: new Date(o.createdAt).toLocaleDateString(),
+          address:
+            typeof o.shippingAddress === "object"
+              ? `${o.shippingAddress.address}, ${o.shippingAddress.city}, ${o.shippingAddress.state} - ${o.shippingAddress.pincode}`
+              : o.shippingAddress,
+          fullData: o,
+        }));
+        setOrders(formatted);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Add / Update product
+  const handleSaveProduct = async (e) => {
+    e.preventDefault();
+    try {
+      const url = editingProduct
+        ? `http://localhost:3000/api/products/${editingProduct.id}`
+        : "http://localhost:3000/api/products";
+      const method = editingProduct ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(editingProduct ? "✅ Product updated!" : "✅ Product added!");
+        setShowForm(false);
+        setEditingProduct(null);
+        setFormData({ name: "", category: "", stock: "", price: "", sku: "" });
+        fetchProducts();
+      } else alert("❌ " + data.error);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // ✅ Delete product
+  const handleDeleteProduct = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
+    try {
+      const res = await fetch(`http://localhost:3000/api/products/${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("🗑️ Product deleted!");
+        fetchProducts();
+      } else alert("❌ " + data.error);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // ✅ Update order status (connected to backend by orderId)
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/orders/${orderId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderStatus: newStatus }),
+      });
+      const result = await res.json();
+
+      if (result.success) {
+        setOrders((prev) =>
+          prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
+        );
+
+        if (selectedOrder && selectedOrder.id === orderId) {
+          setSelectedOrder({ ...selectedOrder, status: newStatus });
+        }
+
+        alert("✅ Order status updated successfully!");
+      } else {
+        alert("❌ " + (result.error || "Failed to update order"));
+      }
+    } catch (err) {
+      console.error("Update error:", err);
+      alert("❌ Error updating order status");
+    }
+  };
+
+  // ✅ Excel Export Function
+  const handleExportExcel = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/api/products");
+      const data = await res.json();
+
+      if (data.success && data.products.length > 0) {
+        const worksheet = XLSX.utils.json_to_sheet(
+          data.products.map((p) => ({
+            Name: p.name,
+            Category: p.category,
+            Stock: p.stock,
+            Price: p.price,
+            SKU: p.sku,
+          }))
+        );
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
+        XLSX.writeFile(workbook, "products_export.xlsx");
+        alert("✅ Excel downloaded successfully!");
+      } else {
+        alert("⚠️ No products available to export!");
+      }
+    } catch (error) {
+      console.error("Excel Export Error:", error);
+      alert("❌ Failed to export products to Excel");
     }
   };
 
@@ -44,11 +175,44 @@ export default function AdminDashboard() {
     navigate("/login");
   };
 
+  // Dashboard stats
+  const totalOrders = orders.length;
+  const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+  const pendingOrders = orders.filter((o) => o.status === "pending").length;
+  const lowStockItems = products.filter((p) => p.stock < 5).length;
+
   const statusColors = {
     pending: "status-pending",
     processing: "status-processing",
     shipped: "status-shipped",
-    delivered: "status-delivered"
+    delivered: "status-delivered",
+  };
+
+  // Customer data
+  const customers = Object.values(
+    orders.reduce((acc, o) => {
+      if (!acc[o.customer]) {
+        acc[o.customer] = {
+          name: o.customer,
+          email: o.email,
+          totalOrders: 0,
+          totalSpent: 0,
+          lastDate: o.date,
+        };
+      }
+      acc[o.customer].totalOrders += 1;
+      acc[o.customer].totalSpent += o.total;
+      acc[o.customer].lastDate = o.date;
+      return acc;
+    }, {})
+  );
+
+  const getFilteredData = () => {
+    if (selectedStat === "pending")
+      return orders.filter((o) => o.status === "pending");
+    if (selectedStat === "lowstock") return products.filter((p) => p.stock < 5);
+    if (selectedStat === "orders") return orders;
+    return [];
   };
 
   return (
@@ -64,130 +228,125 @@ export default function AdminDashboard() {
         </div>
 
         <nav className="admin-nav">
-          <button
-            className={`admin-nav-item ${currentTab === "dashboard" ? "active" : ""}`}
-            onClick={() => setCurrentTab("dashboard")}
-          >
-            <span className="nav-icon">📊</span>
-            <span>Dashboard</span>
-          </button>
-          <button
-            className={`admin-nav-item ${currentTab === "orders" ? "active" : ""}`}
-            onClick={() => setCurrentTab("orders")}
-          >
-            <span className="nav-icon">🛒</span>
-            <span>Orders</span>
-            {pendingOrders > 0 && <span className="badge">{pendingOrders}</span>}
-          </button>
-          <button
-            className={`admin-nav-item ${currentTab === "products" ? "active" : ""}`}
-            onClick={() => setCurrentTab("products")}
-          >
-            <span className="nav-icon">📦</span>
-            <span>Products</span>
-          </button>
-          <button
-            className={`admin-nav-item ${currentTab === "customers" ? "active" : ""}`}
-            onClick={() => setCurrentTab("customers")}
-          >
-            <span className="nav-icon">👥</span>
-            <span>Customers</span>
-          </button>
-          <button
-            className={`admin-nav-item ${currentTab === "settings" ? "active" : ""}`}
-            onClick={() => setCurrentTab("settings")}
-          >
-            <span className="nav-icon">⚙️</span>
-            <span>Settings</span>
-          </button>
+          {["dashboard", "orders", "products", "customers", "settings"].map((tab) => (
+            <button
+              key={tab}
+              className={`admin-nav-item ${currentTab === tab ? "active" : ""}`}
+              onClick={() => setCurrentTab(tab)}
+            >
+              {tab === "dashboard" && "📊 "}
+              {tab === "orders" && "🛒 "}
+              {tab === "products" && "📦 "}
+              {tab === "customers" && "👥 "}
+              {tab === "settings" && "⚙️ "}
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === "orders" && pendingOrders > 0 && (
+                <span className="badge">{pendingOrders}</span>
+              )}
+            </button>
+          ))}
         </nav>
 
         <button className="admin-logout" onClick={handleLogout}>
-          <span className="nav-icon">🚪</span>
-          <span>Logout</span>
+          🚪 Logout
         </button>
       </aside>
 
       {/* Main Content */}
       <main className="admin-main">
-        {/* Header */}
         <header className="admin-header">
           <div>
             <h1>{currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}</h1>
             <p>Welcome back, Admin</p>
           </div>
           <div className="admin-user">
-            <span className="notification-icon">🔔</span>
+            <span>🔔</span>
             <div className="admin-avatar">A</div>
           </div>
         </header>
 
-        {/* Dashboard Content */}
+        {/* Dashboard */}
         {currentTab === "dashboard" && (
           <div className="admin-content">
-            {/* Stats Cards */}
             <div className="stats-grid">
-              <div className="stat-card card-blue">
-                <div className="stat-icon">🛒</div>
-                <div className="stat-details">
-                  <h3>Total Orders</h3>
-                  <p className="stat-number">{totalOrders}</p>
-                  <span className="stat-change positive">+12% this month</span>
-                </div>
+              <div className="stat-card card-blue" onClick={() => setSelectedStat("orders")}>
+                <h3>Total Orders</h3>
+                <p>{totalOrders}</p>
               </div>
-
               <div className="stat-card card-green">
-                <div className="stat-icon">💰</div>
-                <div className="stat-details">
-                  <h3>Total Revenue</h3>
-                  <p className="stat-number">₹{totalRevenue.toLocaleString()}</p>
-                  <span className="stat-change positive">+8% this month</span>
-                </div>
+                <h3>Total Revenue</h3>
+                <p>₹{totalRevenue.toLocaleString()}</p>
               </div>
-
-              <div className="stat-card card-yellow">
-                <div className="stat-icon">⏳</div>
-                <div className="stat-details">
-                  <h3>Pending Orders</h3>
-                  <p className="stat-number">{pendingOrders}</p>
-                  <span className="stat-change">Needs attention</span>
-                </div>
+              <div className="stat-card card-yellow" onClick={() => setSelectedStat("pending")}>
+                <h3>Pending Orders</h3>
+                <p>{pendingOrders}</p>
               </div>
-
-              <div className="stat-card card-red">
-                <div className="stat-icon">⚠️</div>
-                <div className="stat-details">
-                  <h3>Low Stock Items</h3>
-                  <p className="stat-number">{lowStockItems}</p>
-                  <span className="stat-change negative">Restock soon</span>
-                </div>
+              <div className="stat-card card-red" onClick={() => setSelectedStat("lowstock")}>
+                <h3>Low Stock Items</h3>
+                <p>{lowStockItems}</p>
               </div>
             </div>
 
-            {/* Recent Orders */}
-            <div className="admin-card">
-              <div className="card-header">
-                <h2>Recent Orders</h2>
-                <button onClick={() => setCurrentTab("orders")} className="view-all-link">
-                  View All →
-                </button>
+            {selectedStat && (
+              <div className="admin-card">
+                <h2>
+                  {selectedStat === "orders"
+                    ? "All Orders"
+                    : selectedStat === "pending"
+                    ? "Pending Orders"
+                    : "Low Stock Products"}
+                </h2>
+                {selectedStat === "lowstock" ? (
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>SKU</th>
+                        <th>Name</th>
+                        <th>Stock</th>
+                        <th>Price</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {getFilteredData().map((p) => (
+                        <tr key={p._id}>
+                          <td>{p.sku}</td>
+                          <td>{p.name}</td>
+                          <td>{p.stock}</td>
+                          <td>₹{p.price}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {getFilteredData().map((o) => (
+                        <tr key={o.id}>
+                          <td>{o.id}</td>
+                          <td>{o.customer}</td>
+                          <td>₹{o.total}</td>
+                          <td>
+                            <span className={`status-badge ${statusColors[o.status]}`}>
+                              {o.status}
+                            </span>
+                          </td>
+                          <td>{o.date}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
-              <div className="orders-list">
-                {orders.slice(0, 5).map(order => (
-                  <div key={order.id} className="order-item">
-                    <div className="order-avatar">{order.customer.charAt(0)}</div>
-                    <div className="order-info">
-                      <h4>{order.customer}</h4>
-                      <p>{order.id} • {order.date}</p>
-                    </div>
-                    <div className="order-amount">₹{order.total}</div>
-                    <span className={`status-badge ${statusColors[order.status]}`}>
-                      {order.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -195,12 +354,13 @@ export default function AdminDashboard() {
         {currentTab === "orders" && (
           <div className="admin-content">
             <div className="admin-card">
-              <div className="card-header">
-                <h2>All Orders</h2>
-                <input type="text" placeholder="🔍 Search orders..." className="search-input" />
-              </div>
-              <div className="admin-table">
-                <table>
+              <h2>All Orders</h2>
+              {loading ? (
+                <p>Loading...</p>
+              ) : orders.length === 0 ? (
+                <p>No orders yet</p>
+              ) : (
+                <table className="admin-table">
                   <thead>
                     <tr>
                       <th>Order ID</th>
@@ -213,50 +373,98 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {orders.map(order => (
-                      <tr key={order.id}>
-                        <td className="order-id">{order.id}</td>
+                    {orders.map((o) => (
+                      <tr key={o.id}>
+                        <td>{o.id}</td>
+                        <td>{o.customer}</td>
+                        <td>{o.items}</td>
+                        <td>₹{o.total}</td>
                         <td>
-                          <div>
-                            <strong>{order.customer}</strong>
-                            <br />
-                            <small>{order.phone}</small>
-                          </div>
-                        </td>
-                        <td className="order-items">{order.items}</td>
-                        <td className="order-total">₹{order.total}</td>
-                        <td>
-                          <span className={`status-badge ${statusColors[order.status]}`}>
-                            {order.status}
+                          <span className={`status-badge ${statusColors[o.status]}`}>
+                            {o.status}
                           </span>
                         </td>
-                        <td>{order.date}</td>
+                        <td>{o.date}</td>
                         <td>
-                          <button 
-                            className="view-btn"
-                            onClick={() => setSelectedOrder(order)}
-                          >
-                            👁️ View
-                          </button>
+                          <button onClick={() => setSelectedOrder(o)}>👁 View</button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
+              )}
             </div>
+
+            {selectedOrder && (
+              <div className="modal-overlay" onClick={() => setSelectedOrder(null)}>
+                <div className="modal-content large" onClick={(e) => e.stopPropagation()}>
+                  <div className="modal-header">
+                    <h2>Order Details</h2>
+                    <button className="close-modal" onClick={() => setSelectedOrder(null)}>
+                      ✕
+                    </button>
+                  </div>
+                  <div className="modal-body">
+                    <div className="detail-section">
+                      <h3>👤 Customer Info</h3>
+                      <p><strong>Name:</strong> {selectedOrder.customer}</p>
+                      <p><strong>Email:</strong> {selectedOrder.email}</p>
+                      <p><strong>Phone:</strong> {selectedOrder.phone}</p>
+                    </div>
+                    <div className="detail-section">
+                      <h3>📍 Address</h3>
+                      <p>{selectedOrder.address}</p>
+                    </div>
+                    <div className="detail-section">
+                      <h3>📦 Items</h3>
+                      <p>{selectedOrder.items}</p>
+                      <p><strong>Total:</strong> ₹{selectedOrder.total}</p>
+                    </div>
+                    <div className="detail-section">
+                      <h3>Update Status</h3>
+                      <div className="status-buttons">
+                        {["pending", "processing", "shipped", "delivered"].map((s) => (
+                          <button
+                            key={s}
+                            className={`status-update-btn ${
+                              selectedOrder.status === s ? "active" : ""
+                            }`}
+                            onClick={() => updateOrderStatus(selectedOrder.id, s)}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="modal-footer">
+                    <button className="print-btn">🖨 Print Invoice</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Products Tab */}
+        {/* Products, Customers, and Settings Tabs */}
         {currentTab === "products" && (
           <div className="admin-content">
             <div className="admin-card">
-              <div className="card-header">
+              <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h2>Products Management</h2>
-                <div className="action-buttons">
-                  <button className="add-btn">➕ Add Product</button>
-                  <button className="import-btn">📤 Import Excel</button>
+                <div className="action-buttons" style={{ display: 'flex', gap: '15px' }}>
+                  <button
+                    className="add-btn"
+                    onClick={() => {
+                      setShowForm(true);
+                      setEditingProduct(null);
+                    }}
+                  >
+                    ➕ Add Product
+                  </button>
+                  <button className="import-btn" onClick={handleExportExcel}>
+                    📤 Import Excel
+                  </button>
                 </div>
               </div>
               <div className="admin-table">
@@ -272,22 +480,36 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {products.map(product => (
-                      <tr key={product.id}>
-                        <td className="product-sku">{product.sku}</td>
-                        <td><strong>{product.name}</strong></td>
+                    {products.map((p) => (
+                      <tr key={p.id}>
+                        <td className="product-sku">{p.sku}</td>
+                        <td><strong>{p.name}</strong></td>
                         <td>
-                          <span className="category-badge">{product.category}</span>
+                          <span className="category-badge">{p.category}</span>
                         </td>
                         <td>
-                          <span className={product.stock < 5 ? "stock-low" : "stock-good"}>
-                            {product.stock}
+                          <span className={p.stock < 5 ? "stock-low" : "stock-good"}>
+                            {p.stock}
                           </span>
                         </td>
-                        <td><strong>₹{product.price}</strong></td>
+                        <td><strong>₹{p.price}</strong></td>
                         <td>
-                          <button className="edit-btn">✏️</button>
-                          <button className="delete-btn">🗑️</button>
+                          <button
+                            className="edit-btn"
+                            onClick={() => {
+                              setEditingProduct(p);
+                              setFormData(p);
+                              setShowForm(true);
+                            }}
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="delete-btn"
+                            onClick={() => handleDeleteProduct(p.id)}
+                          >
+                            🗑️
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -295,71 +517,106 @@ export default function AdminDashboard() {
                 </table>
               </div>
             </div>
+
+            {showForm && (
+              <div className="modal-overlay" onClick={() => setShowForm(false)}>
+                <div className="modal-content wide" onClick={(e) => e.stopPropagation()}>
+                  <h2>{editingProduct ? "Edit Product" : "Add Product"}</h2>
+                  <form onSubmit={handleSaveProduct}>
+                    <input
+                      type="text"
+                      placeholder="Product Name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                    />
+                    {/* <input
+                      type="text"
+                      placeholder="Category"
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      required
+                    /> */}
+                    <select
+  value={formData.category}
+  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+  required
+  style={{ padding: '10px', width: '100%', fontSize: '14px' }}
+>
+  <option value="">Select Category</option>
+  <option value="Non-Consumable">Non-Consumable</option>
+  <option value="Consumable">Consumable</option>
+</select>
+                    <input
+                      type="text"
+                      placeholder="SKU"
+                      value={formData.sku}
+                      onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                      required
+                    />
+                    <input
+                      type="number"
+                      placeholder="Stock"
+                      value={formData.stock}
+                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                      required
+                    />
+                    <input
+                      type="number"
+                      placeholder="Price"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      required
+                    />
+                    <button type="submit">
+                      {editingProduct ? "Update Product" : "Add Product"}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Customers & Settings Tabs */}
-        {(currentTab === "customers" || currentTab === "settings") && (
+        {currentTab === "customers" && (
           <div className="admin-content">
-            <div className="admin-card empty-state">
-              <span className="empty-icon">
-                {currentTab === "customers" ? "👥" : "⚙️"}
-              </span>
-              <h2>{currentTab.charAt(0).toUpperCase() + currentTab.slice(1)} Management</h2>
-              <p>This section is under development</p>
+            <div className="admin-card">
+              <h2>Customers & Past Orders</h2>
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Total Orders</th>
+                    <th>Total Spent</th>
+                    <th>Last Order Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {customers.map((c) => (
+                    <tr key={c.email}>
+                      <td>{c.name}</td>
+                      <td>{c.email}</td>
+                      <td>{c.totalOrders}</td>
+                      <td>₹{c.totalSpent}</td>
+                      <td>{c.lastDate}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {currentTab === "settings" && (
+          <div className="admin-content">
+            <div className="admin-card">
+              <h2>⚙️ Settings</h2>
+              <p>Here you can manage profile, notifications, and system preferences.</p>
             </div>
           </div>
         )}
       </main>
-
-      {/* Order Details Modal */}
-      {selectedOrder && (
-        <div className="modal-overlay" onClick={() => setSelectedOrder(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Order Details</h2>
-              <button className="close-modal" onClick={() => setSelectedOrder(null)}>
-                ✕
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="detail-section">
-                <h3>👤 Customer Information</h3>
-                <p><strong>Name:</strong> {selectedOrder.customer}</p>
-                <p><strong>Email:</strong> {selectedOrder.email}</p>
-                <p><strong>Phone:</strong> {selectedOrder.phone}</p>
-              </div>
-              <div className="detail-section">
-                <h3>📍 Delivery Address</h3>
-                <p>{selectedOrder.address}</p>
-              </div>
-              <div className="detail-section">
-                <h3>📦 Order Items</h3>
-                <p>{selectedOrder.items}</p>
-                <p className="order-total-detail">Total: ₹{selectedOrder.total}</p>
-              </div>
-              <div className="detail-section">
-                <h3>Update Status</h3>
-                <div className="status-buttons">
-                  {["pending", "processing", "shipped", "delivered"].map(status => (
-                    <button
-                      key={status}
-                      className={`status-update-btn ${selectedOrder.status === status ? "active" : ""}`}
-                      onClick={() => updateOrderStatus(selectedOrder.id, status)}
-                    >
-                      {status}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="print-btn">🖨️ Print Invoice</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
-

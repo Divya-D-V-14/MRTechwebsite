@@ -1,337 +1,206 @@
-// src/pages/CustomerDashboard.jsx
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "./CustomerDashboard.css";
 
-const CustomerDashboard = () => {
+export default function CustomerDashboard() {
   const navigate = useNavigate();
-  const userEmail = localStorage.getItem("userEmail") || "customer@example.com";
-  const userName = "Rajesh Kumar"; // You can get this from localStorage or API
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState(null);
 
-  const [activeTab, setActiveTab] = useState("overview");
+  // ✅ Get user data from localStorage
+  useEffect(() => {
+    const data = JSON.parse(localStorage.getItem("userData"));
+    const isLoggedIn = localStorage.getItem("isLoggedIn");
 
-  // Sample Orders Data - Replace with API call
-  const recentOrders = [
-    { id: "#ORD-001", date: "2025-10-28", items: "Stethoscope, BP Manual", total: 5700, status: "Delivered" },
-    { id: "#ORD-002", date: "2025-10-25", items: "Glucometer", total: 1800, status: "Shipped" },
-    { id: "#ORD-003", date: "2025-10-20", items: "Test Tubes", total: 150, status: "Processing" }
-  ];
+    if (!data || data.userType !== "customer" || !isLoggedIn) {
+      navigate("/login");
+    } else {
+      setUserData(data);
+    }
+  }, [navigate]);
+
+  // ✅ Fetch user's orders
+  useEffect(() => {
+    if (userData && userData.email) {
+      fetchOrders();
+    }
+  }, [userData]);
+
+  const fetchOrders = async () => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/orders/customer/${userData.email}`);
+      const data = await response.json();
+      if (data.success) {
+        setOrders(data.orders);
+      }
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.clear();
     navigate("/login");
   };
 
+  if (!userData) {
+    return (
+      <div style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh",
+        fontSize: "18px",
+        color: "#666",
+      }}>
+        Loading...
+      </div>
+    );
+  }
+
+  const totalSpent = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+  const activeOrders = orders.filter((o) => o.orderStatus !== "delivered").length;
+
+  const statusColors = {
+    pending: "status-pending",
+    processing: "status-processing",
+    confirmed: "status-processing",
+    shipped: "status-shipped",
+    delivered: "status-delivered",
+  };
+
   return (
     <div className="customer-dashboard">
-      {/* Sidebar */}
-      <aside className="dashboard-sidebar">
-        <div className="sidebar-header">
-          <div className="user-avatar">
-            <span>{userName.charAt(0)}</span>
+      <header className="dashboard-header">
+        <div className="header-content">
+          <div>
+            <h1>Welcome, {userData.fullName}! 👋</h1>
+            <p>Manage your orders and track deliveries</p>
           </div>
-          <div className="user-info">
-            <h3>{userName}</h3>
-            <p>{userEmail}</p>
+          <button className="logout-btn" onClick={handleLogout}>
+            🚪 Logout
+          </button>
+        </div>
+      </header>
+
+      <div className="stats-grid">
+        <div className="stat-card card-blue">
+          <div className="stat-icon">📦</div>
+          <div className="stat-details">
+            <h3>Total Orders</h3>
+            <p className="stat-number">{orders.length}</p>
+            <span className="stat-change">All time</span>
           </div>
         </div>
 
-        <nav className="sidebar-nav">
-          <button
-            className={`nav-item ${activeTab === "overview" ? "active" : ""}`}
-            onClick={() => setActiveTab("overview")}
-          >
-            <span className="nav-icon">📊</span>
-            <span>Overview</span>
-          </button>
-          <button
-            className={`nav-item ${activeTab === "orders" ? "active" : ""}`}
-            onClick={() => setActiveTab("orders")}
-          >
-            <span className="nav-icon">📦</span>
-            <span>My Orders</span>
-          </button>
-          <button
-            className={`nav-item ${activeTab === "profile" ? "active" : ""}`}
-            onClick={() => setActiveTab("profile")}
-          >
-            <span className="nav-icon">👤</span>
-            <span>Profile</span>
-          </button>
-          <button
-            className={`nav-item ${activeTab === "settings" ? "active" : ""}`}
-            onClick={() => setActiveTab("settings")}
-          >
-            <span className="nav-icon">⚙️</span>
-            <span>Settings</span>
-          </button>
-          <Link to="/purchase" className="nav-item">
-            <span className="nav-icon">🛒</span>
-            <span>Continue Shopping</span>
-          </Link>
-        </nav>
-
-        <button className="logout-btn" onClick={handleLogout}>
-          <span className="nav-icon">🚪</span>
-          <span>Logout</span>
-        </button>
-      </aside>
-
-      {/* Main Content */}
-      <main className="dashboard-main">
-        {/* Header */}
-        <header className="dashboard-header">
-          <div>
-            <h1>Welcome back, {userName}! 👋</h1>
-            <p>Here's what's happening with your orders today</p>
+        <div className="stat-card card-yellow">
+          <div className="stat-icon">🚚</div>
+          <div className="stat-details">
+            <h3>Active Orders</h3>
+            <p className="stat-number">{activeOrders}</p>
+            <span className="stat-change">In progress</span>
           </div>
-          <Link to="/purchase" className="shop-btn">
-            🛒 Shop Now
-          </Link>
-        </header>
+        </div>
 
-        {/* Overview Tab */}
-        {activeTab === "overview" && (
-          <div className="dashboard-content">
-            {/* Stats Cards */}
-            <div className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-icon" style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }}>
-                  📦
-                </div>
-                <div className="stat-info">
-                  <h3>Total Orders</h3>
-                  <p className="stat-number">12</p>
-                  <span className="stat-change positive">+2 this month</span>
-                </div>
-              </div>
-
-              <div className="stat-card">
-                <div className="stat-icon" style={{ background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" }}>
-                  🚚
-                </div>
-                <div className="stat-info">
-                  <h3>Pending Orders</h3>
-                  <p className="stat-number">2</p>
-                  <span className="stat-change">Awaiting shipment</span>
-                </div>
-              </div>
-
-              <div className="stat-card">
-                <div className="stat-icon" style={{ background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" }}>
-                  ✅
-                </div>
-                <div className="stat-info">
-                  <h3>Completed</h3>
-                  <p className="stat-number">10</p>
-                  <span className="stat-change positive">All delivered</span>
-                </div>
-              </div>
-
-              <div className="stat-card">
-                <div className="stat-icon" style={{ background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)" }}>
-                  💰
-                </div>
-                <div className="stat-info">
-                  <h3>Total Spent</h3>
-                  <p className="stat-number">₹24,500</p>
-                  <span className="stat-change">Lifetime</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Recent Orders */}
-            <div className="recent-orders">
-              <div className="section-header">
-                <h2>Recent Orders</h2>
-                <button onClick={() => setActiveTab("orders")} className="view-all-btn">
-                  View All →
-                </button>
-              </div>
-
-              <div className="orders-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Order ID</th>
-                      <th>Date</th>
-                      <th>Items</th>
-                      <th>Total</th>
-                      <th>Status</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentOrders.map((order) => (
-                      <tr key={order.id}>
-                        <td className="order-id">{order.id}</td>
-                        <td>{order.date}</td>
-                        <td className="order-items">{order.items}</td>
-                        <td className="order-total">₹{order.total}</td>
-                        <td>
-                          <span className={`status-badge status-${order.status.toLowerCase()}`}>
-                            {order.status}
-                          </span>
-                        </td>
-                        <td>
-                          <button className="action-btn">View Details</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="quick-actions">
-              <h2>Quick Actions</h2>
-              <div className="actions-grid">
-                <Link to="/purchase" className="action-card">
-                  <span className="action-icon">🛍️</span>
-                  <h3>Browse Products</h3>
-                  <p>Explore our medical equipment catalog</p>
-                </Link>
-                <button className="action-card" onClick={() => setActiveTab("orders")}>
-                  <span className="action-icon">📋</span>
-                  <h3>Track Orders</h3>
-                  <p>Check your order status in real-time</p>
-                </button>
-                <button className="action-card" onClick={() => setActiveTab("profile")}>
-                  <span className="action-icon">📞</span>
-                  <h3>Contact Support</h3>
-                  <p>Get help from our 24/7 support team</p>
-                </button>
-              </div>
-            </div>
+        <div className="stat-card card-green">
+          <div className="stat-icon">💰</div>
+          <div className="stat-details">
+            <h3>Total Spent</h3>
+            <p className="stat-number">₹{totalSpent.toLocaleString()}</p>
+            <span className="stat-change">All time</span>
           </div>
-        )}
+        </div>
+      </div>
 
-        {/* Orders Tab */}
-        {activeTab === "orders" && (
-          <div className="dashboard-content">
-            <h2 className="content-title">My Orders</h2>
-            <div className="orders-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Order ID</th>
-                    <th>Date</th>
-                    <th>Items</th>
-                    <th>Total</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentOrders.map((order) => (
-                    <tr key={order.id}>
-                      <td className="order-id">{order.id}</td>
-                      <td>{order.date}</td>
-                      <td className="order-items">{order.items}</td>
-                      <td className="order-total">₹{order.total}</td>
-                      <td>
-                        <span className={`status-badge status-${order.status.toLowerCase()}`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td>
-                        <button className="action-btn">View Details</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+      <div className="quick-actions">
+        <h2>Quick Actions</h2>
+        <div className="actions-grid">
+          <button className="action-btn" onClick={() => navigate("/purchase")}>
+            🛍️ Browse Products
+          </button>
+          <button className="action-btn" onClick={() => navigate("/track-order")}>
+            📍 Track Order
+          </button>
+          <button className="action-btn" onClick={() => navigate("/contact")}>
+            💬 Contact Support
+          </button>
+        </div>
+      </div>
+
+      <div className="orders-section">
+        <div className="section-header">
+          <h2>Your Orders</h2>
+          <button className="refresh-btn" onClick={fetchOrders}>🔄 Refresh</button>
+        </div>
+
+        {loading ? (
+          <div className="loading-state">
+            <p>Loading orders...</p>
           </div>
-        )}
+        ) : orders.length === 0 ? (
+          <div className="empty-state">
+            <span className="empty-icon">📦</span>
+            <h3>No orders yet</h3>
+            <p>Start shopping to see your orders here</p>
+            <button className="shop-now-btn" onClick={() => navigate("/purchase")}>
+              🛍️ Shop Now
+            </button>
+          </div>
+        ) : (
+          <div className="orders-list">
+            {orders.map((order) => (
+              <div key={order.orderId} className="order-card">
+                <div className="order-card-header">
+                  <div className="order-id">
+                    <strong>{order.orderId}</strong>
+                    <span className="order-date">
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <span className={`status-badge ${statusColors[order.orderStatus]}`}>
+                    {order.orderStatus}
+                  </span>
+                </div>
 
-        {/* Profile Tab */}
-        {activeTab === "profile" && (
-          <div className="dashboard-content">
-            <h2 className="content-title">My Profile</h2>
-            <div className="profile-card">
-              <div className="profile-section">
-                <h3>Personal Information</h3>
-                <div className="profile-grid">
-                  <div className="profile-field">
-                    <label>Full Name</label>
-                    <input type="text" defaultValue={userName} />
+                <div className="order-card-body">
+                  <div className="order-items-preview">
+                    <strong>Items:</strong>
+                    <p>{order.items.map(item => `${item.name} (${item.quantity})`).join(", ")}</p>
                   </div>
-                  <div className="profile-field">
-                    <label>Email</label>
-                    <input type="email" defaultValue={userEmail} />
+                  <div className="order-details-row">
+                    <div className="order-detail">
+                      <span>💳 Payment:</span>
+                      <strong>{order.paymentMethod}</strong>
+                    </div>
+                    <div className="order-detail">
+                      <span>💰 Total:</span>
+                      <strong>₹{order.totalAmount}</strong>
+                    </div>
                   </div>
-                  <div className="profile-field">
-                    <label>Phone</label>
-                    <input type="tel" defaultValue="+91 9876543210" />
-                  </div>
-                  <div className="profile-field">
-                    <label>Address</label>
-                    <textarea rows="3" defaultValue="123, Anna Nagar, Chennai - 600001"></textarea>
+                  <div className="order-address">
+                    <span>📍</span>
+                    <p>{order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.pincode}</p>
                   </div>
                 </div>
-                <button className="save-btn">Save Changes</button>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* Settings Tab */}
-        {activeTab === "settings" && (
-          <div className="dashboard-content">
-            <h2 className="content-title">Settings</h2>
-            <div className="settings-card">
-              <div className="setting-item">
-                <div className="setting-info">
-                  <h3>Email Notifications</h3>
-                  <p>Receive order updates via email</p>
+                <div className="order-card-footer">
+                  <button
+                    className="track-btn"
+                    onClick={() => navigate("/track-order", { state: { orderId: order.orderId } })}
+                  >
+                    📍 Track Order
+                  </button>
+                  <button className="view-details-btn">👁️ View Details</button>
                 </div>
-                <label className="toggle-switch">
-                  <input type="checkbox" defaultChecked />
-                  <span className="toggle-slider"></span>
-                </label>
               </div>
-              <div className="setting-item">
-                <div className="setting-info">
-                  <h3>SMS Notifications</h3>
-                  <p>Get order alerts via SMS</p>
-                </div>
-                <label className="toggle-switch">
-                  <input type="checkbox" defaultChecked />
-                  <span className="toggle-slider"></span>
-                </label>
-              </div>
-              <div className="setting-item">
-                <div className="setting-info">
-                  <h3>Marketing Emails</h3>
-                  <p>Receive promotional offers</p>
-                </div>
-                <label className="toggle-switch">
-                  <input type="checkbox" />
-                  <span className="toggle-slider"></span>
-                </label>
-              </div>
-            </div>
+            ))}
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
-};
-
-export default CustomerDashboard;
-
-
-
-// import React from "react";
-
-// const CustomerDashboard = () => {
-//   return (
-//     <div style={{ padding: "2rem", textAlign: "center" }}>
-//       <h1>Customer Dashboard Page</h1>
-//     </div>
-//   );
-// };
-
-// export default CustomerDashboard;
+}
