@@ -416,13 +416,13 @@ const teamData = {
   ],
 
     "social-entrepreneurs": [
-    { name: "Rohit Malhotra", role: "Social Impact Lead", image: "/images/social-entrepreneurs/rohit.jpg", bio: "Drives sustainable social enterprises." },
-    { name: "Kavya Shetty", role: "Community Engagement Manager", image: "/images/social-entrepreneurs/kavya.jpg", bio: "Promotes inclusive technology adoption." },
-    { name: "Arjun Varma", role: "Rural Technology Advocate", image: "/images/social-entrepreneurs/arjun.jpg" },
-    { name: "Meena Patel", role: "Digital Inclusion Specialist", image: "/images/social-entrepreneurs/meena.jpg" },
-    { name: "Siddharth Rao", role: "Social Innovation Manager", image: "/images/social-entrepreneurs/siddharth.jpg" },
-    { name: "Ritu Agarwal", role: "Sustainable Tech Advisor", image: "/images/social-entrepreneurs/ritu.jpg" },
-    { name: "Vikash Kumar", role: "Grassroots Technology Lead", image: "/images/social-entrepreneurs/vikash.jpg" },
+    { name: "Purushothaman", role: "Social Entrepreneurs", image: "/images/social-entrepreneurs/s1.jpeg", bio: "Drives sustainable social enterprises." },
+    { name: "Rajan", role: "Social Entrepreneurs", image: "/images/social-entrepreneurs/s2.jpeg", bio: "Promotes inclusive technology adoption." },
+    { name: "Nithya", role: "Social Entrepreneurs", image: "/images/social-entrepreneurs/s3.jpeg" },
+    { name: "Meena Patel", role: "Social Entrepreneurs", image: "/images/social-entrepreneurs/meena.jpg" },
+    { name: "Siddharth Rao", role: "Social Entrepreneurs", image: "/images/social-entrepreneurs/siddharth.jpg" },
+    { name: "Ritu Agarwal", role: "Social Entrepreneurs", image: "/images/social-entrepreneurs/ritu.jpg" },
+    { name: "Vikash Kumar", role: "", image: "/images/social-entrepreneurs/vikash.jpg" },
     { name: "Prachi Goyal", role: "Social Enterprise Consultant", image: "/images/social-entrepreneurs/prachi.jpg" },
   ],
 };

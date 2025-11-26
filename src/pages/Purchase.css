@@ -499,5 +499,9 @@
   }
 }
 
-
-
+/* ⭐ Added: Increase image display size */
+.product-image img {
+  width: 150px !important;
+  height: 150px !important;
+  object-fit: contain;
+}

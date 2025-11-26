@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
@@ -14,13 +13,20 @@ export default function AdminDashboard() {
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [selectedStat, setSelectedStat] = useState(null);
+  
+  // ✅ NEW: Added description field to formData
   const [formData, setFormData] = useState({
     name: "",
     category: "",
     stock: "",
     price: "",
     sku: "",
+    description: "", // ✅ NEW
   });
+
+  // ✅ NEW: Image upload state
+  const [productImage, setProductImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   // Fetch orders + products
   useEffect(() => {
@@ -69,25 +75,56 @@ export default function AdminDashboard() {
     }
   };
 
-  // ✅ Add / Update product
+  // ✅ NEW: Handle image selection
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProductImage(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // ✅ UPDATED: Add / Update product with image and description
   const handleSaveProduct = async (e) => {
     e.preventDefault();
     try {
+      // ✅ NEW: Use FormData for image upload
+      const formDataToSend = new FormData();
+      formDataToSend.append("name", formData.name);
+      formDataToSend.append("category", formData.category);
+      formDataToSend.append("price", formData.price);
+      formDataToSend.append("stock", formData.stock);
+      formDataToSend.append("sku", formData.sku);
+      formDataToSend.append("description", formData.description); // ✅ NEW
+      
+      if (productImage) {
+        formDataToSend.append("image", productImage); // ✅ NEW
+      }
+
       const url = editingProduct
         ? `http://localhost:3000/api/products/${editingProduct.id}`
         : "http://localhost:3000/api/products";
       const method = editingProduct ? "PUT" : "POST";
+      
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: formDataToSend, // ✅ CHANGED: Send FormData instead of JSON
       });
+      
       const data = await res.json();
       if (data.success) {
         alert(editingProduct ? "✅ Product updated!" : "✅ Product added!");
         setShowForm(false);
         setEditingProduct(null);
-        setFormData({ name: "", category: "", stock: "", price: "", sku: "" });
+        setFormData({ name: "", category: "", stock: "", price: "", sku: "", description: "" }); // ✅ UPDATED
+        setProductImage(null); // ✅ NEW
+        setImagePreview(null); // ✅ NEW
         fetchProducts();
       } else alert("❌ " + data.error);
     } catch (err) {
@@ -155,6 +192,7 @@ export default function AdminDashboard() {
             Stock: p.stock,
             Price: p.price,
             SKU: p.sku,
+            Description: p.description || "", // ✅ NEW
           }))
         );
         const workbook = XLSX.utils.book_new();
@@ -308,7 +346,7 @@ export default function AdminDashboard() {
                     </thead>
                     <tbody>
                       {getFilteredData().map((p) => (
-                        <tr key={p._id}>
+                        <tr key={p.id}>
                           <td>{p.sku}</td>
                           <td>{p.name}</td>
                           <td>{p.stock}</td>
@@ -446,7 +484,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Products, Customers, and Settings Tabs */}
+        {/* Products Tab */}
         {currentTab === "products" && (
           <div className="admin-content">
             <div className="admin-card">
@@ -458,6 +496,9 @@ export default function AdminDashboard() {
                     onClick={() => {
                       setShowForm(true);
                       setEditingProduct(null);
+                      setFormData({ name: "", category: "", stock: "", price: "", sku: "", description: "" }); // ✅ UPDATED
+                      setProductImage(null); // ✅ NEW
+                      setImagePreview(null); // ✅ NEW
                     }}
                   >
                     ➕ Add Product
@@ -471,6 +512,7 @@ export default function AdminDashboard() {
                 <table>
                   <thead>
                     <tr>
+                      <th>Image</th> {/* ✅ NEW */}
                       <th>SKU</th>
                       <th>Product Name</th>
                       <th>Category</th>
@@ -482,6 +524,29 @@ export default function AdminDashboard() {
                   <tbody>
                     {products.map((p) => (
                       <tr key={p.id}>
+                        {/* ✅ NEW: Image column */}
+                        <td>
+                          {p.image ? (
+                            <img
+                              src={p.image}
+                              alt={p.name}
+                              style={{ width: 50, height: 50, objectFit: "cover", borderRadius: 5 }}
+                            />
+                          ) : (
+                            <div style={{ 
+                              width: 50, 
+                              height: 50, 
+                              background: "#f0f0f0", 
+                              borderRadius: 5,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: 20
+                            }}>
+                              🧴
+                            </div>
+                          )}
+                        </td>
                         <td className="product-sku">{p.sku}</td>
                         <td><strong>{p.name}</strong></td>
                         <td>
@@ -498,7 +563,15 @@ export default function AdminDashboard() {
                             className="edit-btn"
                             onClick={() => {
                               setEditingProduct(p);
-                              setFormData(p);
+                              setFormData({
+                                name: p.name,
+                                category: p.category,
+                                stock: p.stock,
+                                price: p.price,
+                                sku: p.sku,
+                                description: p.description || "", // ✅ NEW
+                              });
+                              setImagePreview(p.image); // ✅ NEW
                               setShowForm(true);
                             }}
                           >
@@ -518,66 +591,142 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* ✅ UPDATED: Product Form Modal with Image and Description */}
             {showForm && (
               <div className="modal-overlay" onClick={() => setShowForm(false)}>
                 <div className="modal-content wide" onClick={(e) => e.stopPropagation()}>
-                  <h2>{editingProduct ? "Edit Product" : "Add Product"}</h2>
-                  <form onSubmit={handleSaveProduct}>
-                    <input
-                      type="text"
-                      placeholder="Product Name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
-                    />
-                    {/* <input
-                      type="text"
-                      placeholder="Category"
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      required
-                    /> */}
-                    <select
-  value={formData.category}
-  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-  required
-  style={{ padding: '10px', width: '100%', fontSize: '14px' }}
->
-  <option value="">Select Category</option>
-  <option value="Non-Consumable">Non-Consumable</option>
-  <option value="Consumable">Consumable</option>
-</select>
-                    <input
-                      type="text"
-                      placeholder="SKU"
-                      value={formData.sku}
-                      onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                      required
-                    />
-                    <input
-                      type="number"
-                      placeholder="Stock"
-                      value={formData.stock}
-                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                      required
-                    />
-                    <input
-                      type="number"
-                      placeholder="Price"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      required
-                    />
-                    <button type="submit">
-                      {editingProduct ? "Update Product" : "Add Product"}
+                  <div className="modal-header">
+                    <h2>{editingProduct ? "Edit Product" : "Add Product"}</h2>
+                    <button className="close-modal" onClick={() => setShowForm(false)}>
+                      ✕
                     </button>
-                  </form>
+                  </div>
+                  <div className="modal-body">
+                    <form onSubmit={handleSaveProduct}>
+                      <input
+                        type="text"
+                        placeholder="Product Name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
+                      />
+                      
+                      <select
+                        value={formData.category}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        required
+                        style={{ 
+                          padding: '12px', 
+                          width: '100%', 
+                          fontSize: '14px',
+                          marginBottom: '15px',
+                          borderRadius: '10px',
+                          border: '1.5px solid #ddd'
+                        }}
+                      >
+                        <option value="">Select Category</option>
+                        <option value="Non-Consumable">Non-Consumable</option>
+                        <option value="Consumable">Consumable</option>
+                      </select>
+                      
+                      <input
+                        type="text"
+                        placeholder="SKU"
+                        value={formData.sku}
+                        onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                        required
+                      />
+                      
+                      <input
+                        type="number"
+                        placeholder="Stock"
+                        value={formData.stock}
+                        onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                        required
+                      />
+                      
+                      <input
+                        type="number"
+                        placeholder="Price"
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        required
+                      />
+
+                      {/* ✅ NEW: Description Field */}
+                      <textarea
+                        placeholder="Product Description"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        rows="4"
+                        style={{
+                          width: "100%",
+                          marginBottom: 15,
+                          padding: 12,
+                          borderRadius: 10,
+                          border: "1.5px solid #ddd",
+                          fontSize: 14,
+                          fontFamily: "inherit",
+                          resize: "vertical"
+                        }}
+                      />
+
+                      {/* ✅ NEW: Image Upload Field */}
+                      <div style={{ marginBottom: 15 }}>
+                        <label
+                          htmlFor="product-image"
+                          style={{
+                            display: "block",
+                            marginBottom: 8,
+                            fontSize: 14,
+                            fontWeight: 600,
+                            color: "#00333d"
+                          }}
+                        >
+                          Product Image
+                        </label>
+                        <input
+                          id="product-image"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          style={{
+                            width: "100%",
+                            padding: 10,
+                            border: "1.5px solid #ddd",
+                            borderRadius: 10,
+                            fontSize: 14
+                          }}
+                        />
+                        {/* ✅ NEW: Image Preview */}
+                        {imagePreview && (
+                          <div style={{ marginTop: 15, textAlign: "center" }}>
+                            <img
+                              src={imagePreview}
+                              alt="Preview"
+                              style={{
+                                maxWidth: "100%",
+                                maxHeight: 200,
+                                borderRadius: 10,
+                                border: "2px solid #f0f0f0"
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                      
+                      <button type="submit">
+                        {editingProduct ? "Update Product" : "Add Product"}
+                      </button>
+                    </form>
+                  </div>
                 </div>
               </div>
             )}
           </div>
         )}
 
+        {/* Customers Tab */}
         {currentTab === "customers" && (
           <div className="admin-content">
             <div className="admin-card">
@@ -608,6 +757,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* Settings Tab */}
         {currentTab === "settings" && (
           <div className="admin-content">
             <div className="admin-card">

@@ -1,229 +1,34 @@
-
-// import React, { useState, useEffect } from "react";
-// import { useNavigate } from "react-router-dom";
-// import "./CustomerDashboard.css";
-
-// export default function CustomerDashboard() {
-//   const navigate = useNavigate();
-//   const [orders, setOrders] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [userData, setUserData] = useState(null);
-
-//   // ✅ Get user data from localStorage
-//   useEffect(() => {
-//     const data = JSON.parse(localStorage.getItem("userData"));
-//     const isLoggedIn = localStorage.getItem("isLoggedIn");
-
-//     if (!data || data.userType !== "customer" || !isLoggedIn) {
-//       navigate("/login");
-//     } else {
-//       setUserData(data);
-//     }
-//   }, [navigate]);
-
-//   // ✅ Fetch user's orders
-//   useEffect(() => {
-//     if (userData && userData.email) {
-//       fetchOrders();
-//     }
-//   }, [userData]);
-
-//   const fetchOrders = async () => {
-//     try {
-//       const response = await fetch(`http://localhost:3000/api/orders/customer/${userData.email}`);
-//       const data = await response.json();
-//       if (data.success) {
-//         setOrders(data.orders);
-//       }
-//     } catch (error) {
-//       console.error("Error fetching orders:", error);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   const handleLogout = () => {
-//     localStorage.clear();
-//     navigate("/login");
-//   };
-
-//   if (!userData) {
-//     return (
-//       <div style={{
-//         display: "flex",
-//         justifyContent: "center",
-//         alignItems: "center",
-//         minHeight: "100vh",
-//         fontSize: "18px",
-//         color: "#666",
-//       }}>
-//         Loading...
-//       </div>
-//     );
-//   }
-
-//   const totalSpent = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
-//   const activeOrders = orders.filter((o) => o.orderStatus !== "delivered").length;
-
-//   const statusColors = {
-//     pending: "status-pending",
-//     processing: "status-processing",
-//     confirmed: "status-processing",
-//     shipped: "status-shipped",
-//     delivered: "status-delivered",
-//   };
-
-//   return (
-//     <div className="customer-dashboard">
-//       <header className="dashboard-header">
-//         <div className="header-content">
-//           <div>
-//             <h1>Welcome, {userData.fullName}! 👋</h1>
-//             <p>Manage your orders and track deliveries</p>
-//           </div>
-//           <button className="logout-btn" onClick={handleLogout}>
-//             🚪 Logout
-//           </button>
-//         </div>
-//       </header>
-
-//       <div className="stats-grid">
-//         <div className="stat-card card-blue">
-//           <div className="stat-icon">📦</div>
-//           <div className="stat-details">
-//             <h3>Total Orders</h3>
-//             <p className="stat-number">{orders.length}</p>
-//             <span className="stat-change">All time</span>
-//           </div>
-//         </div>
-
-//         <div className="stat-card card-yellow">
-//           <div className="stat-icon">🚚</div>
-//           <div className="stat-details">
-//             <h3>Active Orders</h3>
-//             <p className="stat-number">{activeOrders}</p>
-//             <span className="stat-change">In progress</span>
-//           </div>
-//         </div>
-
-//         <div className="stat-card card-green">
-//           <div className="stat-icon">💰</div>
-//           <div className="stat-details">
-//             <h3>Total Spent</h3>
-//             <p className="stat-number">₹{totalSpent.toLocaleString()}</p>
-//             <span className="stat-change">All time</span>
-//           </div>
-//         </div>
-//       </div>
-
-//       <div className="quick-actions">
-//         <h2>Quick Actions</h2>
-//         <div className="actions-grid">
-//           <button className="action-btn" onClick={() => navigate("/purchase")}>
-//             🛍️ Browse Products
-//           </button>
-//           <button className="action-btn" onClick={() => navigate("/track-order")}>
-//             📍 Track Order
-//           </button>
-//           <button className="action-btn" onClick={() => navigate("/contact")}>
-//             💬 Contact Support
-//           </button>
-//         </div>
-//       </div>
-
-//       <div className="orders-section">
-//         <div className="section-header">
-//           <h2>Your Orders</h2>
-//           <button className="refresh-btn" onClick={fetchOrders}>🔄 Refresh</button>
-//         </div>
-
-//         {loading ? (
-//           <div className="loading-state">
-//             <p>Loading orders...</p>
-//           </div>
-//         ) : orders.length === 0 ? (
-//           <div className="empty-state">
-//             <span className="empty-icon">📦</span>
-//             <h3>No orders yet</h3>
-//             <p>Start shopping to see your orders here</p>
-//             <button className="shop-now-btn" onClick={() => navigate("/purchase")}>
-//               🛍️ Shop Now
-//             </button>
-//           </div>
-//         ) : (
-//           <div className="orders-list">
-//             {orders.map((order) => (
-//               <div key={order.orderId} className="order-card">
-//                 <div className="order-card-header">
-//                   <div className="order-id">
-//                     <strong>{order.orderId}</strong>
-//                     <span className="order-date">
-//                       {new Date(order.createdAt).toLocaleDateString()}
-//                     </span>
-//                   </div>
-//                   <span className={`status-badge ${statusColors[order.orderStatus]}`}>
-//                     {order.orderStatus}
-//                   </span>
-//                 </div>
-
-//                 <div className="order-card-body">
-//                   <div className="order-items-preview">
-//                     <strong>Items:</strong>
-//                     <p>{order.items.map(item => `${item.name} (${item.quantity})`).join(", ")}</p>
-//                   </div>
-//                   <div className="order-details-row">
-//                     <div className="order-detail">
-//                       <span>💳 Payment:</span>
-//                       <strong>{order.paymentMethod}</strong>
-//                     </div>
-//                     <div className="order-detail">
-//                       <span>💰 Total:</span>
-//                       <strong>₹{order.totalAmount}</strong>
-//                     </div>
-//                   </div>
-//                   <div className="order-address">
-//                     <span>📍</span>
-//                     <p>{order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.pincode}</p>
-//                   </div>
-//                 </div>
-
-//                 <div className="order-card-footer">
-//                   <button
-//                     className="track-btn"
-//                     onClick={() => navigate("/track-order", { state: { orderId: order.orderId } })}
-//                   >
-//                     📍 Track Order
-//                   </button>
-//                   <button className="view-details-btn">👁️ View Details</button>
-//                 </div>
-//               </div>
-//             ))}
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
-
-
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./CustomerDashboard.css";
 import { 
   FaBox, FaTruck, FaWallet, FaShoppingBag, FaMapMarkerAlt, 
   FaHeadset, FaHeart, FaHistory, FaUser, FaBell, FaSearch,
-  FaChartLine, FaStar, FaGift, FaClock
+  FaChartLine, FaStar, FaGift, FaClock, FaExclamationCircle,
+  FaCheckCircle, FaTimesCircle, FaSpinner
 } from "react-icons/fa";
 
 export default function CustomerDashboard() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
+  const [stats, setStats] = useState({
+    totalOrders: 0,
+    totalSpent: 0,
+    activeOrders: 0,
+    deliveredOrders: 0,
+    pendingOrders: 0
+  });
   const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+
+  const API_BASE_URL = "http://localhost:3000/api";
 
   // ✅ Get user data from localStorage
   useEffect(() => {
@@ -237,25 +42,155 @@ export default function CustomerDashboard() {
     }
   }, [navigate]);
 
-  // ✅ Fetch user's orders
+  // ✅ Fetch all data when user is available
   useEffect(() => {
     if (userData && userData.email) {
-      fetchOrders();
+      fetchAllData();
     }
   }, [userData]);
 
+  // 🔥 Fetch all customer data (orders, stats, notifications)
+  const fetchAllData = async () => {
+    setError(null);
+    await Promise.all([
+      fetchOrders(),
+      fetchStats(),
+      fetchRecentOrdersForNotifications()
+    ]);
+  };
+
+  // 📦 Fetch user's orders with better error handling
   const fetchOrders = async () => {
+    if (!userData?.email) return;
+    
+    setLoading(true);
+    setError(null);
+    
     try {
-      const response = await fetch(`http://localhost:3000/api/orders/customer/${userData.email}`);
+      const response = await fetch(`${API_BASE_URL}/orders/customer/${userData.email}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
+      
       if (data.success) {
-        setOrders(data.orders);
+        setOrders(data.orders || []);
+        console.log(`✅ Loaded ${data.orders?.length || 0} orders`);
+      } else {
+        setError(data.message || "Failed to fetch orders");
       }
     } catch (error) {
-      console.error("Error fetching orders:", error);
+      console.error("❌ Error fetching orders:", error);
+      setError("Unable to connect to server. Please check if the backend is running.");
+      setOrders([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  // 📊 Fetch customer statistics with improved calculation
+  const fetchStats = async () => {
+    if (!userData?.email) return;
+    
+    setStatsLoading(true);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/orders/customer/${userData.email}/stats`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setStats(data.stats);
+        console.log("✅ Stats loaded:", data.stats);
+      } else {
+        console.error("Failed to fetch stats:", data.message);
+      }
+    } catch (error) {
+      console.error("❌ Error fetching stats:", error);
+      // Set default stats on error
+      setStats({
+        totalOrders: 0,
+        totalSpent: 0,
+        activeOrders: 0,
+        deliveredOrders: 0,
+        pendingOrders: 0
+      });
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  // 🔔 Fetch recent orders for notifications
+  const fetchRecentOrdersForNotifications = async () => {
+    if (!userData?.email) return;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/orders/customer/${userData.email}/recent?limit=5`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.orders) {
+        // Convert recent orders to notification format
+        const orderNotifications = data.orders.map((order, index) => ({
+          id: order.orderId,
+          message: `Order #${order.orderId} is ${order.orderStatus}`,
+          time: getTimeAgo(order.createdAt),
+          unread: index < 2, // Mark first 2 as unread
+          orderStatus: order.orderStatus,
+          type: getNotificationType(order.orderStatus)
+        }));
+        
+        setNotifications(orderNotifications);
+        console.log(`✅ Loaded ${orderNotifications.length} notifications`);
+      }
+    } catch (error) {
+      console.error("❌ Error fetching notifications:", error);
+      // Fallback to welcome notification
+      setNotifications([
+        { 
+          id: 1, 
+          message: "Welcome to your dashboard! Start shopping to see your orders.", 
+          time: "Just now", 
+          unread: true,
+          type: "info"
+        }
+      ]);
+    }
+  };
+
+  // 🎨 Get notification type based on order status
+  const getNotificationType = (status) => {
+    switch (status) {
+      case "delivered": return "success";
+      case "cancelled": return "error";
+      case "pending": return "warning";
+      default: return "info";
+    }
+  };
+
+  // 🕒 Helper function to get time ago
+  const getTimeAgo = (dateString) => {
+    if (!dateString) return "Unknown";
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+    
+    if (diffInSeconds < 60) return "Just now";
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
   };
 
   const handleLogout = () => {
@@ -263,6 +198,26 @@ export default function CustomerDashboard() {
       localStorage.clear();
       navigate("/login");
     }
+  };
+
+  const handleRefresh = async () => {
+    setSuccessMessage(null);
+    await fetchAllData();
+    setSuccessMessage("Dashboard refreshed successfully!");
+    setTimeout(() => setSuccessMessage(null), 3000);
+  };
+
+  // 🎯 Handle Track Order with proper navigation
+  const handleTrackOrder = (orderId) => {
+    console.log("Tracking order:", orderId);
+    navigate("/track-order", { state: { orderId: orderId } });
+  };
+
+  // 📋 Handle View Order Details
+  const handleViewDetails = (order) => {
+    console.log("Viewing order details:", order);
+    // You can navigate to a dedicated order details page or show a modal
+    navigate("/order-details", { state: { order: order } });
   };
 
   if (!userData) {
@@ -274,16 +229,11 @@ export default function CustomerDashboard() {
     );
   }
 
-  // Statistics
-  const totalSpent = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
-  const activeOrders = orders.filter((o) => o.orderStatus !== "delivered").length;
-  const deliveredOrders = orders.filter((o) => o.orderStatus === "delivered").length;
-  const pendingOrders = orders.filter((o) => o.orderStatus === "pending").length;
-
-  // Filter orders
+  // Filter orders based on search and status
   const filteredOrders = orders.filter((order) => {
-    const matchesSearch = order.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         order.items.some(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesSearch = order.orderId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         order.items?.some(item => item.name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                         order.customerName?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = filterStatus === "all" || order.orderStatus === filterStatus;
     return matchesSearch && matchesFilter;
   });
@@ -294,14 +244,17 @@ export default function CustomerDashboard() {
     confirmed: "status-confirmed",
     shipped: "status-shipped",
     delivered: "status-delivered",
+    cancelled: "status-cancelled"
   };
 
-  // Mock notifications
-  const notifications = [
-    { id: 1, message: "Your order #12345 has been shipped!", time: "2 hours ago", unread: true },
-    { id: 2, message: "New offers available - Up to 30% off!", time: "1 day ago", unread: true },
-    { id: 3, message: "Order #12344 delivered successfully", time: "3 days ago", unread: false },
-  ];
+  const statusIcons = {
+    pending: <FaClock />,
+    processing: <FaSpinner className="spinning" />,
+    confirmed: <FaCheckCircle />,
+    shipped: <FaTruck />,
+    delivered: <FaCheckCircle />,
+    cancelled: <FaTimesCircle />
+  };
 
   const unreadNotifications = notifications.filter(n => n.unread).length;
 
@@ -332,6 +285,7 @@ export default function CustomerDashboard() {
           <button 
             className="notification-btn"
             onClick={() => setShowNotifications(!showNotifications)}
+            title="Notifications"
           >
             <FaBell />
             {unreadNotifications > 0 && (
@@ -363,17 +317,52 @@ export default function CustomerDashboard() {
             <button onClick={() => setShowNotifications(false)}>✕</button>
           </div>
           <div className="notifications-list">
-            {notifications.map((notif) => (
-              <div key={notif.id} className={`notification-item ${notif.unread ? 'unread' : ''}`}>
-                <p>{notif.message}</p>
-                <span className="notification-time">{notif.time}</span>
+            {notifications.length === 0 ? (
+              <div className="notification-item">
+                <p>No notifications yet</p>
               </div>
-            ))}
+            ) : (
+              notifications.map((notif) => (
+                <div 
+                  key={notif.id} 
+                  className={`notification-item ${notif.unread ? 'unread' : ''} notification-${notif.type}`}
+                >
+                  <div className="notification-icon">
+                    {notif.type === "success" && <FaCheckCircle />}
+                    {notif.type === "error" && <FaTimesCircle />}
+                    {notif.type === "warning" && <FaExclamationCircle />}
+                    {notif.type === "info" && <FaBell />}
+                  </div>
+                  <div className="notification-content">
+                    <p>{notif.message}</p>
+                    <span className="notification-time">{notif.time}</span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
 
       <div className="dashboard-container">
+        {/* Success Message */}
+        {successMessage && (
+          <div className="success-alert">
+            <FaCheckCircle />
+            <span>{successMessage}</span>
+            <button onClick={() => setSuccessMessage(null)}>✕</button>
+          </div>
+        )}
+
+        {/* Error Alert */}
+        {error && (
+          <div className="error-alert">
+            <FaExclamationCircle />
+            <span>{error}</span>
+            <button onClick={() => setError(null)}>✕</button>
+          </div>
+        )}
+
         {/* Hero Welcome Section */}
         <section className="welcome-section">
           <div className="welcome-content">
@@ -395,7 +384,9 @@ export default function CustomerDashboard() {
             </div>
             <div className="stat-content">
               <h3>Total Orders</h3>
-              <p className="stat-number">{orders.length}</p>
+              <p className="stat-number">
+                {statsLoading ? <FaSpinner className="spinning" /> : stats.totalOrders}
+              </p>
               <span className="stat-label">All time orders</span>
             </div>
             <div className="stat-chart">
@@ -409,8 +400,10 @@ export default function CustomerDashboard() {
             </div>
             <div className="stat-content">
               <h3>Active Orders</h3>
-              <p className="stat-number">{activeOrders}</p>
-              <span className="stat-label">In transit</span>
+              <p className="stat-number">
+                {statsLoading ? <FaSpinner className="spinning" /> : stats.activeOrders}
+              </p>
+              <span className="stat-label">Processing & Shipped</span>
             </div>
             <div className="stat-chart">
               <FaClock />
@@ -423,7 +416,9 @@ export default function CustomerDashboard() {
             </div>
             <div className="stat-content">
               <h3>Total Spent</h3>
-              <p className="stat-number">₹{totalSpent.toLocaleString()}</p>
+              <p className="stat-number">
+                {statsLoading ? <FaSpinner className="spinning" /> : `₹${stats.totalSpent.toLocaleString('en-IN')}`}
+              </p>
               <span className="stat-label">Lifetime spending</span>
             </div>
             <div className="stat-chart">
@@ -437,7 +432,9 @@ export default function CustomerDashboard() {
             </div>
             <div className="stat-content">
               <h3>Delivered</h3>
-              <p className="stat-number">{deliveredOrders}</p>
+              <p className="stat-number">
+                {statsLoading ? <FaSpinner className="spinning" /> : stats.deliveredOrders}
+              </p>
               <span className="stat-label">Successfully delivered</span>
             </div>
             <div className="stat-chart">
@@ -489,7 +486,12 @@ export default function CustomerDashboard() {
           <div className="orders-header">
             <div>
               <h2 className="section-title">Your Orders</h2>
-              <p className="section-subtitle">Manage and track all your orders</p>
+              <p className="section-subtitle">
+                {filteredOrders.length === 0 && !loading 
+                  ? "No orders to display"
+                  : `Showing ${filteredOrders.length} of ${orders.length} orders`
+                }
+              </p>
             </div>
             <div className="orders-controls">
               <select 
@@ -497,14 +499,20 @@ export default function CustomerDashboard() {
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
               >
-                <option value="all">All Orders</option>
+                <option value="all">All Orders ({orders.length})</option>
                 <option value="pending">Pending</option>
                 <option value="processing">Processing</option>
+                <option value="confirmed">Confirmed</option>
                 <option value="shipped">Shipped</option>
                 <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
               </select>
-              <button className="refresh-btn-new" onClick={fetchOrders}>
-                🔄 Refresh
+              <button 
+                className="refresh-btn-new" 
+                onClick={handleRefresh}
+                disabled={loading}
+              >
+                🔄 {loading ? "Refreshing..." : "Refresh"}
               </button>
             </div>
           </div>
@@ -526,6 +534,17 @@ export default function CustomerDashboard() {
                   : "Start shopping to see your orders here"
                 }
               </p>
+              {(searchQuery || filterStatus !== "all") && (
+                <button 
+                  className="clear-filters-btn" 
+                  onClick={() => {
+                    setSearchQuery("");
+                    setFilterStatus("all");
+                  }}
+                >
+                  Clear Filters
+                </button>
+              )}
               <button className="shop-now-btn-new" onClick={() => navigate("/purchase")}>
                 <FaShoppingBag /> Start Shopping
               </button>
@@ -540,59 +559,77 @@ export default function CustomerDashboard() {
                       <div>
                         <strong className="order-id-text">#{order.orderId}</strong>
                         <span className="order-date-text">
-                          {new Date(order.createdAt).toLocaleDateString('en-IN', {
+                          {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', {
                             day: 'numeric',
                             month: 'short',
-                            year: 'numeric'
-                          })}
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          }) : 'Date unavailable'}
                         </span>
                       </div>
                     </div>
-                    <span className={`status-badge-new ${statusColors[order.orderStatus]}`}>
+                    <span className={`status-badge-new ${statusColors[order.orderStatus] || 'status-pending'}`}>
+                      {statusIcons[order.orderStatus] || <FaClock />}
                       {order.orderStatus}
                     </span>
                   </div>
 
                   <div className="order-card-body-new">
                     <div className="order-items-section">
-                      <h4>Items Ordered</h4>
+                      <h4>Items Ordered ({order.items?.length || 0})</h4>
                       <div className="items-list">
-                        {order.items.map((item, idx) => (
+                        {order.items?.map((item, idx) => (
                           <div key={idx} className="item-row">
-                            <span className="item-name">{item.name}</span>
-                            <span className="item-qty">x{item.quantity}</span>
+                            <span className="item-name">{item.name || 'Unknown Item'}</span>
+                            <span className="item-qty">x{item.quantity || 1}</span>
                           </div>
-                        ))}
+                        )) || <p>No items</p>}
                       </div>
                     </div>
 
                     <div className="order-details-grid">
                       <div className="detail-item">
                         <span className="detail-label">💳 Payment</span>
-                        <strong>{order.paymentMethod}</strong>
+                        <strong>{order.paymentMethod || 'N/A'}</strong>
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">💰 Total</span>
-                        <strong className="amount-text">₹{order.totalAmount.toLocaleString()}</strong>
+                        <strong className="amount-text">
+                          ₹{(order.totalAmount || 0).toLocaleString('en-IN')}
+                        </strong>
                       </div>
                     </div>
 
-                    <div className="order-address-new">
-                      <FaMapMarkerAlt />
-                      <p>
-                        {order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.pincode}
-                      </p>
-                    </div>
+                    {order.shippingAddress && (
+                      <div className="order-address-new">
+                        <FaMapMarkerAlt />
+                        <p>
+                          {order.shippingAddress.city || ''}, {order.shippingAddress.state || ''} 
+                          {order.shippingAddress.pincode ? ` - ${order.shippingAddress.pincode}` : ''}
+                        </p>
+                      </div>
+                    )}
+
+                    {order.estimatedDelivery && (
+                      <div className="delivery-estimate">
+                        <FaClock />
+                        <span>Estimated: {order.estimatedDelivery}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="order-card-footer-new">
                     <button
                       className="track-btn-new"
-                      onClick={() => navigate("/track-order", { state: { orderId: order.orderId } })}
+                      onClick={() => handleTrackOrder(order.orderId)}
                     >
                       <FaMapMarkerAlt /> Track Order
                     </button>
-                    <button className="details-btn-new">
+                    <button 
+                      className="details-btn-new"
+                      onClick={() => handleViewDetails(order)}
+                    >
                       View Details →
                     </button>
                   </div>

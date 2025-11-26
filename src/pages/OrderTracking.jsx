@@ -5,50 +5,89 @@ import "./OrderTracking.css";
 const OrderTracking = () => {
   const location = useLocation();
   const receivedOrderId = location.state?.orderId || "";
+  
   const [orderId, setOrderId] = useState(receivedOrderId);
   const [orderData, setOrderData] = useState(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Dummy order data (mock)
-  const dummyOrder = {
-    id: receivedOrderId || "548231",
-    customerName: "Divya D V",
-    date: "Oct 30, 2025",
-    totalAmount: 3250,
-    paymentMethod: "Cash on Delivery",
-    status: "Shipped",
-    items: [
-      { name: "Test Tube Stand", quantity: 2, price: 850 },
-      { name: "Tourniquet", quantity: 1, price: 450 },
-    ],
-    address: {
-      line1: "12, Main Street",
-      city: "Coimbatore",
-      state: "Tamil Nadu",
-      pincode: "641001",
-    },
-    estimatedDelivery: "Nov 2–4, 2025",
+  // ✅ API Base URL
+  const API_BASE_URL = "http://localhost:3000/api";
+
+  // 🔥 Real API call function
+  const fetchOrderDetails = async (searchOrderId) => {
+    setLoading(true);
+    setError("");
+    setOrderData(null);
+
+    try {
+      console.log("🔍 Fetching order:", searchOrderId);
+
+      const response = await fetch(
+        `${API_BASE_URL}/orders/track/${searchOrderId}`
+      );
+
+      console.log("📡 Response status:", response.status);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("Order not found");
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("📦 Response data:", data);
+
+      if (data.success && data.order) {
+        setOrderData(data.order);
+        setError("");
+      } else {
+        setError("⚠️ Order not found. Please check your Order ID.");
+        setOrderData(null);
+      }
+    } catch (error) {
+      console.error("❌ Fetch error:", error);
+      if (error.message === "Order not found") {
+        setError("⚠️ Order not found. Please check your Order ID.");
+      } else {
+        setError("❌ Unable to connect to server. Please check if backend is running.");
+      }
+      setOrderData(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // 🧠 Auto-load if orderId received
+  // 🧠 Auto-load if orderId received from dashboard
   useEffect(() => {
     if (receivedOrderId) {
-      handleTrack();
+      fetchOrderDetails(receivedOrderId);
     }
   }, [receivedOrderId]);
 
+  // 📍 Track button click
   const handleTrack = () => {
-    if (orderId === dummyOrder.id || receivedOrderId) {
-      setOrderData(dummyOrder);
-      setError("");
-    } else {
-      setError("⚠️ Order not found. Please check your Order ID.");
-      setOrderData(null);
+    if (!orderId.trim()) {
+      setError("⚠️ Please enter an Order ID");
+      return;
     }
+    fetchOrderDetails(orderId);
   };
 
-  const stages = ["Pending", "Confirmed", "Shipped", "Out for Delivery", "Delivered"];
-  const currentStageIndex = orderData ? stages.indexOf(orderData.status) : -1;
+  // 🎨 Status stages mapping
+  const getStatusStages = () => {
+    const allStages = ["pending", "processing", "confirmed", "shipped", "delivered"];
+    const currentStatus = orderData?.orderStatus?.toLowerCase() || "";
+    const currentIndex = allStages.indexOf(currentStatus);
+    
+    return {
+      stages: ["Pending", "Processing", "Confirmed", "Shipped", "Delivered"],
+      currentIndex: currentIndex
+    };
+  };
+
+  const { stages, currentIndex } = orderData ? getStatusStages() : { stages: [], currentIndex: -1 };
 
   return (
     <div className="tracking-page">
@@ -60,62 +99,118 @@ const OrderTracking = () => {
         <div className="tracking-form">
           <input
             type="text"
-            placeholder="Enter your Order ID (e.g. 548231)"
+            placeholder="Enter your Order ID (e.g. ORD1762504859625)"
             value={orderId}
             onChange={(e) => setOrderId(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleTrack()}
           />
-          <button onClick={handleTrack}>Track Order</button>
+          <button onClick={handleTrack} disabled={loading}>
+            {loading ? "Searching..." : "Track Order"}
+          </button>
         </div>
 
+        {/* ⚠️ Error Message */}
         {error && <p className="error-text">{error}</p>}
 
-        {/* 📄 Order Details */}
-        {orderData && (
-          <div className="order-details">
-            <h2>Order #{orderData.id}</h2>
-            <p><strong>Date:</strong> {orderData.date}</p>
-            <p><strong>Name:</strong> {orderData.customerName}</p>
-            <p><strong>Payment:</strong> {orderData.paymentMethod}</p>
-            <p><strong>Total:</strong> ₹{orderData.totalAmount}</p>
+        {/* ⏳ Loading State */}
+        {loading && (
+          <div className="loading-state">
+            <div className="spinner"></div>
+            <p>Loading order details...</p>
+          </div>
+        )}
 
-            {/* 🚀 Progress */}
+        {/* 📄 Order Details */}
+        {orderData && !loading && (
+          <div className="order-details">
+            <h2>Order #{orderData.orderId}</h2>
+            <p><strong>Date:</strong> {new Date(orderData.createdAt).toLocaleDateString('en-IN', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric'
+            })}</p>
+            <p><strong>Customer:</strong> {orderData.customerName}</p>
+            <p><strong>Payment:</strong> {orderData.paymentMethod}</p>
+            <p><strong>Payment Status:</strong> {orderData.paymentStatus}</p>
+            <p><strong>Total:</strong> ₹{orderData.totalAmount?.toLocaleString('en-IN')}</p>
+            <p><strong>Status:</strong> <span className={`status-badge ${orderData.orderStatus}`}>{orderData.orderStatus}</span></p>
+
+            {/* 🚀 Progress Bar */}
             <div className="tracking-progress">
               {stages.map((stage, index) => (
                 <div
                   key={stage}
-                  className={`stage ${index <= currentStageIndex ? "active" : ""}`}
+                  className={`stage ${index <= currentIndex ? "active" : ""} ${index === currentIndex ? "current" : ""}`}
                 >
-                  <div className="dot"></div>
+                  <div className="dot">
+                    {index <= currentIndex ? "✓" : ""}
+                  </div>
                   <p>{stage}</p>
                 </div>
               ))}
             </div>
 
-            {/* 📍 Address */}
+            {/* 📍 Delivery Address */}
             <div className="address-box">
-              <h3>Delivery Address</h3>
-              <p>{orderData.address.line1}</p>
+              <h3>📍 Delivery Address</h3>
+              <p>{orderData.shippingAddress?.address || orderData.shippingAddress?.line1 || "N/A"}</p>
               <p>
-                {orderData.address.city}, {orderData.address.state} -{" "}
-                {orderData.address.pincode}
+                {orderData.shippingAddress?.city}, {orderData.shippingAddress?.state} - {orderData.shippingAddress?.pincode}
               </p>
-              <p><strong>Est. Delivery:</strong> {orderData.estimatedDelivery}</p>
+              {orderData.estimatedDelivery && (
+                <p><strong>Est. Delivery:</strong> {orderData.estimatedDelivery}</p>
+              )}
+              {orderData.phone && (
+                <p><strong>Contact:</strong> {orderData.phone}</p>
+              )}
             </div>
 
             {/* 🛍️ Items Ordered */}
             <div className="items-box">
-              <h3>Items Ordered</h3>
+              <h3>🛍️ Items Ordered ({orderData.items?.length || 0})</h3>
               <ul>
-                {orderData.items.map((item, idx) => (
+                {orderData.items?.map((item, idx) => (
                   <li key={idx}>
                     <span>{item.name}</span>
                     <span>
-                      ₹{item.price} × {item.quantity}
+                      ₹{item.price?.toLocaleString('en-IN')} × {item.quantity}
                     </span>
                   </li>
                 ))}
               </ul>
+              
+              {/* Order Summary */}
+              <div className="order-summary">
+                <div className="summary-row">
+                  <span>Subtotal:</span>
+                  <span>₹{orderData.subtotal?.toLocaleString('en-IN')}</span>
+                </div>
+                {orderData.shipping && (
+                  <div className="summary-row">
+                    <span>Shipping:</span>
+                    <span>₹{orderData.shipping?.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+                {orderData.tax && (
+                  <div className="summary-row">
+                    <span>Tax:</span>
+                    <span>₹{orderData.tax?.toLocaleString('en-IN')}</span>
+                  </div>
+                )}
+                <div className="summary-row total">
+                  <span><strong>Total:</strong></span>
+                  <span><strong>₹{orderData.totalAmount?.toLocaleString('en-IN')}</strong></span>
+                </div>
+              </div>
             </div>
+          </div>
+        )}
+
+        {/* 📭 Empty State */}
+        {!orderData && !loading && !error && (
+          <div className="empty-state">
+            <div className="empty-icon">📦</div>
+            <p>Enter your Order ID to track your order</p>
           </div>
         )}
       </div>
